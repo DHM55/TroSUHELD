@@ -16,13 +16,10 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'Aa3650667788'
 
 
-# =========================
-#  الاتصال بقاعدة البيانات
-# =========================
 def get_db_connection():
     """الاتصال بقاعدة البيانات"""
 
-    # أولاً نحاول باستخدام DATABASE_URL (Render / غيره)
+    # أولاً نحاول الاتصال باستخدام DATABASE_URL (Render / Railway / الخ)
     db_url = os.getenv("DATABASE_URL")
 
     try:
@@ -31,7 +28,7 @@ def get_db_connection():
             conn = psycopg2.connect(db_url)
             return conn
         else:
-            # في حال ما فيه DATABASE_URL نرجع للمتغيرات القديمة
+            # في حال ما فيه DATABASE_URL نرجع للطريقة القديمة (PG* variables)
             conn = psycopg2.connect(
                 database=os.getenv('PGDATABASE'),
                 user=os.getenv('PGUSER'),
@@ -45,9 +42,6 @@ def get_db_connection():
         return None
 
 
-# =========================
-#  تهيئة قاعدة البيانات
-# =========================
 def init_database():
     """تهيئة قاعدة البيانات وإنشاء الجداول"""
     try:
@@ -82,7 +76,7 @@ def init_database():
             )
         ''')
 
-        # التأكد من وجود عمود installation_center في الجداول القديمة
+        # إضافة العمود للجداول الموجودة إن لم يكن موجوداً
         cur.execute('''
             DO $$ 
             BEGIN 
@@ -122,22 +116,19 @@ def add_initial_codes():
         count = result[0] if result else 0
 
         if count == 0:
-            # الأكواد الأولية
             initial_codes = [
                 '11111', '22222', '33333', '44444', '55555',
                 '66666', '77777', '88888', '99999', '12345'
             ]
 
-            for code in initial_codes:
-                cur.execute(
-                    "INSERT INTO codes (code) VALUES (%s) ON CONFLICT (code) DO NOTHING",
-                    (code,)
-                )
+        for code in initial_codes:
+            cur.execute(
+                "INSERT INTO codes (code) VALUES (%s) ON CONFLICT (code) DO NOTHING",
+                (code,)
+            )
 
-            conn.commit()
-            print(f"✅ تم إضافة {len(initial_codes)} كود أولي")
-        else:
-            print(f"ℹ️ يوجد بالفعل {count} كود في جدول الأكواد، لن نضيف الأكواد الأولية")
+        conn.commit()
+        print(f"✅ تم إضافة {len(initial_codes)} كود أولي")
 
         cur.close()
         conn.close()
@@ -148,9 +139,6 @@ def add_initial_codes():
         return False
 
 
-# =========================
-#  دوال مساعدة
-# =========================
 def get_valid_codes():
     """الحصول على الأكواد الصالحة (غير المستخدمة)"""
     try:
@@ -180,6 +168,7 @@ def save_customer(name, phone, plate_letters, plate_numbers, installation_center
 
         cur = conn.cursor()
 
+        # حفظ بيانات العميل
         cur.execute('''
             INSERT INTO customers (name, phone, plate_letters, plate_numbers, installation_center, activation_code)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -273,9 +262,6 @@ def get_stats():
         return {'customers': 0, 'codes': 0}
 
 
-# =========================
-#    المسارات (Routes)
-# =========================
 @app.route('/', methods=['GET', 'POST'])
 def warranty_activation():
     if request.method == 'POST':
@@ -303,8 +289,12 @@ def warranty_activation():
         # التحقق من صحة الكود
         valid_codes = get_valid_codes()
         if code in valid_codes:
+            # حفظ بيانات العميل
             if save_customer(name, phone, plate_letters, plate_numbers, installation_center, code):
+                # تمييز الكود كمستخدم
                 mark_code_used(code)
+
+                # تاريخ التفعيل الحالي
                 activation_date = datetime.now().strftime('%Y-%m-%d %H:%M')
 
                 return render_template(
@@ -366,6 +356,7 @@ def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
+    # الحصول على بيانات العملاء والإحصائيات
     customers = get_customers()
     valid_codes = get_valid_codes()
     stats = get_stats()
@@ -399,6 +390,7 @@ def add_codes():
         flash('لم يتم العثور على أكواد صحيحة', 'error')
         return redirect(url_for('admin_dashboard'))
 
+    # إضافة الأكواد إلى قاعدة البيانات
     try:
         conn = get_db_connection()
         if not conn:
@@ -414,6 +406,7 @@ def add_codes():
                 cur.execute("INSERT INTO codes (code) VALUES (%s)", (code,))
                 added_count += 1
             except IntegrityError:
+                # كود مكرر
                 duplicate_count += 1
                 conn.rollback()
                 continue
@@ -474,51 +467,24 @@ def admin_logout():
 
 @app.route('/api', methods=['GET', 'HEAD'])
 def api_status():
-    """API status endpoint"""
+    """API status endpoint to prevent 404 errors from monitoring systems"""
     return {"status": "ok", "service": "True Shield Warranty System"}
 
 
-# =========================
-#  مسار استرجاع الباك أب (تشغيل واحد فقط)
-# =========================
-@app.route('/admin/restore_backup')
-def admin_restore_backup():
-    """استرجاع العملاء والأكواد من ملفات النسخة الاحتياطية"""
-    if not session.get('admin_logged_in'):
-        return redirect(url_for('admin_login'))
+if __name__ == '__main__':
+    print("🚀 بدء تشغيل True Shield مع قاعدة البيانات...")
 
-    try:
-        from restore_backup import restore_from_backup
-        restore_from_backup()
-        flash('✅ تم استرجاع النسخة الاحتياطية (العملاء + الأكواد) بنجاح', 'success')
-    except Exception as e:
-        print(f"❌ خطأ في استرجاع النسخة الاحتياطية: {e}")
-        flash('❌ حدث خطأ في استرجاع النسخة الاحتياطية، راجع السجلات (Logs)', 'error')
-
-    return redirect(url_for('admin_dashboard'))
-
-
-# =========================
-#  تهيئة القاعدة عند استيراد الملف
-# =========================
-def run_initial_setup():
-    print("🔧 بدء تهيئة قاعدة البيانات...")
+    # تهيئة قاعدة البيانات
     if init_database():
         add_initial_codes()
         stats = get_stats()
-        print("📊 إحصائيات بعد التهيئة:")
+        print("📊 إحصائيات:")
         print(f"   • الأكواد المتاحة: {stats['codes']}")
         print(f"   • العملاء المسجلين: {stats['customers']}")
         print("✅ True Shield جاهز للعمل مع قاعدة البيانات!")
     else:
         print("❌ فشل في تهيئة قاعدة البيانات")
 
-
-# تشغيل التهيئة مرة واحدة عند استيراد الملف
-run_initial_setup()
-
-
-if __name__ == '__main__':
-    # تشغيل مباشر (على جهازك مثلاً)
+    # Render يعطي PORT في ENV
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
