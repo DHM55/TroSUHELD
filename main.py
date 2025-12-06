@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import (
-    Flask, render_template, request, session,
-    redirect, url_for, flash, send_file
-)
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 from datetime import datetime
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2 import IntegrityError
-import json
-import io
 
 app = Flask(__name__)
 app.secret_key = 'true_shield_2025'
@@ -25,14 +20,18 @@ ADMIN_PASSWORD = 'Aa3650667788'
 #  الاتصال بقاعدة البيانات
 # =========================
 def get_db_connection():
-    """الاتصال بقاعدة البيانات باستخدام DATABASE_URL أو متغيرات PG*."""
+    """الاتصال بقاعدة البيانات"""
+
+    # أولاً نحاول باستخدام DATABASE_URL (Render / غيره)
     db_url = os.getenv("DATABASE_URL")
 
     try:
         if db_url:
             # مثال: postgresql://user:pass@host:port/dbname
             conn = psycopg2.connect(db_url)
+            return conn
         else:
+            # في حال ما فيه DATABASE_URL نرجع للمتغيرات القديمة
             conn = psycopg2.connect(
                 database=os.getenv('PGDATABASE'),
                 user=os.getenv('PGUSER'),
@@ -40,7 +39,7 @@ def get_db_connection():
                 host=os.getenv('PGHOST'),
                 port=os.getenv('PGPORT')
             )
-        return conn
+            return conn
     except Exception as e:
         print(f"❌ خطأ في الاتصال بقاعدة البيانات: {e}")
         return None
@@ -50,7 +49,7 @@ def get_db_connection():
 #  تهيئة قاعدة البيانات
 # =========================
 def init_database():
-    """إنشاء الجداول إن لم تكن موجودة."""
+    """تهيئة قاعدة البيانات وإنشاء الجداول"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -59,18 +58,18 @@ def init_database():
 
         cur = conn.cursor()
 
-        # جدول الأكواد
-        cur.execute("""
+        # إنشاء جدول الأكواد
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS codes (
                 id SERIAL PRIMARY KEY,
                 code VARCHAR(50) UNIQUE NOT NULL,
                 is_used BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        ''')
 
-        # جدول العملاء
-        cur.execute("""
+        # إنشاء جدول العملاء
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS customers (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -81,27 +80,26 @@ def init_database():
                 activation_code VARCHAR(50) NOT NULL,
                 activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        ''')
 
-        # التأكد من وجود عمود installation_center
-        cur.execute("""
-            DO $$
-            BEGIN
+        # التأكد من وجود عمود installation_center في الجداول القديمة
+        cur.execute('''
+            DO $$ 
+            BEGIN 
                 IF NOT EXISTS (
-                    SELECT 1 FROM information_schema.columns
-                    WHERE table_name='customers'
-                      AND column_name='installation_center'
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='customers' AND column_name='installation_center'
                 ) THEN
-                    ALTER TABLE customers
-                        ADD COLUMN installation_center VARCHAR(255);
+                    ALTER TABLE customers ADD COLUMN installation_center VARCHAR(255);
                 END IF;
             END $$;
-        """)
+        ''')
 
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ تم التأكد من الجداول بنجاح")
+
+        print("✅ تم تهيئة قاعدة البيانات بنجاح")
         return True
 
     except Exception as e:
@@ -110,38 +108,43 @@ def init_database():
 
 
 def add_initial_codes():
-    """إضافة أكواد أولية إذا كان جدول الأكواد فارغاً."""
+    """إضافة الأكواد الأولية إذا لم تكن موجودة"""
     try:
         conn = get_db_connection()
         if not conn:
             return False
 
         cur = conn.cursor()
+
+        # التحقق من وجود أكواد
         cur.execute("SELECT COUNT(*) FROM codes")
-        count = cur.fetchone()[0]
+        result = cur.fetchone()
+        count = result[0] if result else 0
 
         if count == 0:
+            # الأكواد الأولية
             initial_codes = [
                 '11111', '22222', '33333', '44444', '55555',
                 '66666', '77777', '88888', '99999', '12345'
             ]
+
             for code in initial_codes:
                 cur.execute(
-                    "INSERT INTO codes (code) VALUES (%s) "
-                    "ON CONFLICT (code) DO NOTHING",
+                    "INSERT INTO codes (code) VALUES (%s) ON CONFLICT (code) DO NOTHING",
                     (code,)
                 )
+
             conn.commit()
             print(f"✅ تم إضافة {len(initial_codes)} كود أولي")
         else:
-            print(f"ℹ️ يوجد بالفعل {count} كود في جدول الأكواد")
+            print(f"ℹ️ يوجد بالفعل {count} كود في جدول الأكواد، لن نضيف الأكواد الأولية")
 
         cur.close()
         conn.close()
         return True
 
     except Exception as e:
-        print(f"❌ خطأ في إضافة الأكواد الأولية: {e}")
+        print(f"❌ خطأ في إضافة الأكواد: {e}")
         return False
 
 
@@ -149,7 +152,7 @@ def add_initial_codes():
 #  دوال مساعدة
 # =========================
 def get_valid_codes():
-    """إرجاع الأكواد غير المستخدمة."""
+    """الحصول على الأكواد الصالحة (غير المستخدمة)"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -169,24 +172,23 @@ def get_valid_codes():
 
 
 def save_customer(name, phone, plate_letters, plate_numbers, installation_center, code):
-    """حفظ بيانات عميل جديد."""
+    """حفظ بيانات العميل في قاعدة البيانات"""
     try:
         conn = get_db_connection()
         if not conn:
             return False
 
         cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO customers (
-                name, phone, plate_letters, plate_numbers,
-                installation_center, activation_code
-            )
+
+        cur.execute('''
+            INSERT INTO customers (name, phone, plate_letters, plate_numbers, installation_center, activation_code)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """, (name, phone, plate_letters, plate_numbers, installation_center, code))
+        ''', (name, phone, plate_letters, plate_numbers, installation_center, code))
 
         conn.commit()
         cur.close()
         conn.close()
+
         print(f"✅ تم حفظ العميل: {name}")
         return True
 
@@ -196,7 +198,7 @@ def save_customer(name, phone, plate_letters, plate_numbers, installation_center
 
 
 def mark_code_used(code):
-    """تحديد الكود كمستخدم."""
+    """تمييز الكود كمستخدم في قاعدة البيانات"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -205,18 +207,20 @@ def mark_code_used(code):
         cur = conn.cursor()
         cur.execute("UPDATE codes SET is_used = TRUE WHERE code = %s", (code,))
         conn.commit()
+
         cur.close()
         conn.close()
+
         print(f"🗑️ تم تمييز الكود كمستخدم: {code}")
         return True
 
     except Exception as e:
-        print(f"❌ خطأ في تحديث حالة الكود: {e}")
+        print(f"❌ خطأ في تحديث الكود: {e}")
         return False
 
 
 def get_customers():
-    """إرجاع جميع العملاء."""
+    """الحصول على جميع العملاء"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -230,6 +234,7 @@ def get_customers():
             ORDER BY activated_at DESC
         """)
         customers = cur.fetchall()
+
         cur.close()
         conn.close()
         return customers
@@ -240,7 +245,7 @@ def get_customers():
 
 
 def get_stats():
-    """إرجاع عدد العملاء وعدد الأكواد المتاحة."""
+    """إحصائيات النظام"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -248,11 +253,15 @@ def get_stats():
 
         cur = conn.cursor()
 
+        # عدد العملاء
         cur.execute("SELECT COUNT(*) FROM customers")
-        customers_count = cur.fetchone()[0]
+        result = cur.fetchone()
+        customers_count = result[0] if result else 0
 
+        # عدد الأكواد المتاحة
         cur.execute("SELECT COUNT(*) FROM codes WHERE is_used = FALSE")
-        codes_count = cur.fetchone()[0]
+        result = cur.fetchone()
+        codes_count = result[0] if result else 0
 
         cur.close()
         conn.close()
@@ -265,7 +274,7 @@ def get_stats():
 
 
 # =========================
-#    صفحة تفعيل الضمان
+#    المسارات (Routes)
 # =========================
 @app.route('/', methods=['GET', 'POST'])
 def warranty_activation():
@@ -277,6 +286,7 @@ def warranty_activation():
         installation_center = request.form.get('installation_center', '').strip()
         code = request.form.get('code', '').strip()
 
+        # التحقق من الحقول
         if not all([name, phone, plate_letters, plate_numbers, installation_center, code]):
             return render_template(
                 'result.html',
@@ -290,11 +300,13 @@ def warranty_activation():
                 code=code
             )
 
+        # التحقق من صحة الكود
         valid_codes = get_valid_codes()
         if code in valid_codes:
             if save_customer(name, phone, plate_letters, plate_numbers, installation_center, code):
                 mark_code_used(code)
                 activation_date = datetime.now().strftime('%Y-%m-%d %H:%M')
+
                 return render_template(
                     'result.html',
                     success=True,
@@ -331,9 +343,6 @@ def warranty_activation():
     return render_template('index.html')
 
 
-# =========================
-#  تسجيل دخول الأدمن
-# =========================
 @app.route('/admin')
 def admin_login():
     return render_template('admin_login.html')
@@ -352,9 +361,6 @@ def admin_authenticate():
         return redirect(url_for('admin_login'))
 
 
-# =========================
-#   لوحة التحكم
-# =========================
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
@@ -372,11 +378,9 @@ def admin_dashboard():
     )
 
 
-# =========================
-#   إضافة أكواد جديدة
-# =========================
 @app.route('/admin/add_codes', methods=['POST'])
 def add_codes():
+    """إضافة أكواد جديدة من لوحة التحكم (مع تجاهل المكرر بدون تخريب الإضافة)"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
@@ -385,6 +389,7 @@ def add_codes():
         flash('يرجى إدخال أكواد صحيحة', 'error')
         return redirect(url_for('admin_dashboard'))
 
+    # تقسيم الأكواد (فاصلة أو سطر جديد)
     codes = []
     for line in codes_text.replace(',', '\n').split('\n'):
         code = line.strip()
@@ -406,94 +411,104 @@ def add_codes():
         duplicate_count = 0
 
         for code in codes:
-            try:
-                cur.execute("INSERT INTO codes (code) VALUES (%s)", (code,))
+            # نحاول الإضافة، ولو كان مكرر يتجاهله بدون خطأ
+            cur.execute(
+                "INSERT INTO codes (code, is_used) VALUES (%s, FALSE) "
+                "ON CONFLICT (code) DO NOTHING",
+                (code,)
+            )
+
+            if cur.rowcount == 1:
+                # فعلاً انضاف سطر جديد
                 added_count += 1
-            except IntegrityError:
+            else:
+                # الكود كان مكرر
                 duplicate_count += 1
-                conn.rollback()
-                continue
 
         conn.commit()
         cur.close()
         conn.close()
 
-        msg = f"تم إضافة {added_count} كود جديد"
-        if duplicate_count > 0:
-            msg += f" (تم تجاهل {duplicate_count} كود مكرر)"
-        flash(msg, 'success')
+        if added_count == 0 and duplicate_count > 0:
+            message = 'كل الأكواد المدخلة كانت مكررة، لم يتم إضافة أي كود جديد'
+        else:
+            message = f"تم إضافة {added_count} كود جديد"
+            if duplicate_count > 0:
+                message += f" ({duplicate_count} كود مكرر تم تجاهله)"
+
+        flash(message, 'success')
 
     except Exception as e:
-        print(f"❌ خطأ في إضافة الأكواد: {e}")
+        print(f"خطأ في إضافة الأكواد: {e}")
         flash('حدث خطأ في إضافة الأكواد', 'error')
 
     return redirect(url_for('admin_dashboard'))
 
 
-# =========================
-#   تحميل نسخة احتياطية
-# =========================
-@app.route('/admin/backup')
-def admin_backup():
-    """تحميل نسخة احتياطية (JSON) للمستخدم على جهازه."""
+@app.route('/admin/delete_code/<code>', methods=['POST'])
+def delete_code(code):
+    """حذف كود من قاعدة البيانات"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    data = {
-        "customers": get_customers(),
-        "codes": get_valid_codes()
-    }
+    try:
+        conn = get_db_connection()
+        if not conn:
+            flash('خطأ في الاتصال بقاعدة البيانات', 'error')
+            return redirect(url_for('admin_dashboard'))
 
-    backup_json = json.dumps(data, ensure_ascii=False, indent=4)
-    buffer = io.BytesIO(backup_json.encode('utf-8'))
+        cur = conn.cursor()
+        cur.execute("DELETE FROM codes WHERE code = %s AND is_used = FALSE", (code,))
 
-    # attachment_filename متوافق مع Flask القديم
-    return send_file(
-        buffer,
-        mimetype='application/json; charset=utf-8',
-        as_attachment=True,
-        attachment_filename='true_shield_backup.json'
-    )
+        if cur.rowcount > 0:
+            conn.commit()
+            flash(f'تم حذف الكود {code} بنجاح', 'success')
+        else:
+            flash('لا يمكن حذف هذا الكود (قد يكون مستخدماً أو غير موجود)', 'error')
+
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print(f"خطأ في حذف الكود: {e}")
+        flash('حدث خطأ في حذف الكود', 'error')
+
+    return redirect(url_for('admin_dashboard'))
 
 
-# =========================
-#   تسجيل الخروج
-# =========================
-@app.route('/admin/logout', methods=['GET', 'POST'])
+@app.route('/admin/logout')
 def admin_logout():
-    """تسجيل خروج الأدمن (تعمل مع GET أو POST)."""
-    session.clear()
+    session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
 
 
-# =========================
-#   API بسيط
-# =========================
-@app.route('/api', methods=['GET'])
+@app.route('/api', methods=['GET', 'HEAD'])
 def api_status():
+    """API status endpoint"""
     return {"status": "ok", "service": "True Shield Warranty System"}
 
 
 # =========================
-#  تهيئة القاعدة عند التشغيل
+#  تهيئة القاعدة عند استيراد الملف
 # =========================
 def run_initial_setup():
-    print("🔧 بدء التهيئة...")
+    print("🔧 بدء تهيئة قاعدة البيانات...")
     if init_database():
         add_initial_codes()
         stats = get_stats()
-        print("📊 الإحصائيات بعد التهيئة:")
+        print("📊 إحصائيات بعد التهيئة:")
         print(f"   • الأكواد المتاحة: {stats['codes']}")
         print(f"   • العملاء المسجلين: {stats['customers']}")
-        print("✅ النظام جاهز للعمل")
+        print("✅ True Shield جاهز للعمل مع قاعدة البيانات!")
     else:
         print("❌ فشل في تهيئة قاعدة البيانات")
 
 
-# تشغيل التهيئة عند استيراد الملف
+# تشغيل التهيئة مرة واحدة عند استيراد الملف (مع gunicorn / Render)
 run_initial_setup()
 
 
 if __name__ == '__main__':
+    # تشغيل مباشر (على جهازك مثلاً)
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
