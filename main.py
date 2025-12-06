@@ -137,7 +137,7 @@ def add_initial_codes():
             conn.commit()
             print(f"✅ تم إضافة {len(initial_codes)} كود أولي")
         else:
-            print(f"ℹ️ يوجد بالفعل {count} كود في الجدول، لن نضيف الأكواد الأولية")
+            print(f"ℹ️ يوجد بالفعل {count} كود في جدول الأكواد، لن نضيف الأكواد الأولية")
 
         cur.close()
         conn.close()
@@ -479,8 +479,8 @@ def api_status():
 
 
 # =========================
-#  تهيئة القاعدة عند التشغيل
-#  (تعمل مع gunicorn و التشغيل المحلي)
+#  تهيئة القاعدة عند استيراد الملف
+#  (يعمل مع gunicorn و التشغيل المحلي)
 # =========================
 def run_initial_setup():
     print("🔧 بدء تهيئة قاعدة البيانات...")
@@ -495,14 +495,11 @@ def run_initial_setup():
         print("❌ فشل في تهيئة قاعدة البيانات")
 
 
-@app.before_first_request
-def before_first_request():
-    """يشتغل مرة واحدة عند أول طلب (مهم مع gunicorn)"""
-    run_initial_setup()
+# تشغيل التهيئة مرة واحدة عند استيراد الملف
+run_initial_setup()
 
 
 if __name__ == '__main__':
     # تشغيل مباشر (على جهازك مثلاً)
-    run_initial_setup()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
