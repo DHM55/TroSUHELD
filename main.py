@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import (
+    Flask, render_template, request, session,
+    redirect, url_for, flash, Response
+)
 from datetime import datetime
 import os
+import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2 import IntegrityError
@@ -168,6 +172,29 @@ def get_valid_codes():
 
     except Exception as e:
         print(f"❌ خطأ في تحميل الأكواد: {e}")
+        return []
+
+
+def get_all_codes():
+    """جلب جميع الأكواد (مستخدمة وغير مستخدمة) للنسخة الاحتياطية"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, code, is_used, created_at "
+            "FROM codes ORDER BY id"
+        )
+        codes = cur.fetchall()
+
+        cur.close()
+        conn.close()
+        return codes
+
+    except Exception as e:
+        print(f"❌ خطأ في تحميل جميع الأكواد: {e}")
         return []
 
 
@@ -380,7 +407,6 @@ def admin_dashboard():
 
 @app.route('/admin/add_codes', methods=['POST'])
 def add_codes():
-    """إضافة أكواد جديدة من لوحة التحكم (مع تجاهل المكرر بدون تخريب الإضافة)"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
@@ -411,30 +437,21 @@ def add_codes():
         duplicate_count = 0
 
         for code in codes:
-            # نحاول الإضافة، ولو كان مكرر يتجاهله بدون خطأ
-            cur.execute(
-                "INSERT INTO codes (code, is_used) VALUES (%s, FALSE) "
-                "ON CONFLICT (code) DO NOTHING",
-                (code,)
-            )
-
-            if cur.rowcount == 1:
-                # فعلاً انضاف سطر جديد
+            try:
+                cur.execute("INSERT INTO codes (code) VALUES (%s)", (code,))
                 added_count += 1
-            else:
-                # الكود كان مكرر
+            except IntegrityError:
                 duplicate_count += 1
+                conn.rollback()
+                continue
 
         conn.commit()
         cur.close()
         conn.close()
 
-        if added_count == 0 and duplicate_count > 0:
-            message = 'كل الأكواد المدخلة كانت مكررة، لم يتم إضافة أي كود جديد'
-        else:
-            message = f"تم إضافة {added_count} كود جديد"
-            if duplicate_count > 0:
-                message += f" ({duplicate_count} كود مكرر تم تجاهله)"
+        message = f"تم إضافة {added_count} كود جديد"
+        if duplicate_count > 0:
+            message += f" ({duplicate_count} كود مكرر تم تجاهله)"
 
         flash(message, 'success')
 
@@ -482,6 +499,33 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 
+@app.route('/admin/backup')
+def admin_backup():
+    """تحميل نسخة احتياطية كملف JSON واحد"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    customers = get_customers()
+    codes = get_all_codes()
+
+    backup_data = {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "customers": customers,
+        "codes": codes,
+    }
+
+    json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
+    filename = f"true_shield_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    return Response(
+        json_data,
+        mimetype="application/json",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
+
 @app.route('/api', methods=['GET', 'HEAD'])
 def api_status():
     """API status endpoint"""
@@ -504,7 +548,7 @@ def run_initial_setup():
         print("❌ فشل في تهيئة قاعدة البيانات")
 
 
-# تشغيل التهيئة مرة واحدة عند استيراد الملف (مع gunicorn / Render)
+# تشغيل التهيئة مرة واحدة عند استيراد الملف
 run_initial_setup()
 
 
