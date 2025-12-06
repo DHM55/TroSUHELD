@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "name": "أحمد خالد الصاعدي",
+    "phone": "0541444542",
+    "plate_letters": "B H R",
+    "plate_numbers": "3969",
+    "activation_code": "536836263",
+    "activated_at": "2025-09-03T04:15:30.972931",
+    "installation_center": null
+  },
+  {
+    "id": 2,
+    "name": "يزيد عبدالله الحجوري",
+    "phone": "0556886922",
+    "plate_letters": "KBD",
+    "plate_numbers": "4578",
+    "activation_code": "735693584",
+    "activated_at": "2025-09-03T06:19:08.383878",
+    "installation_center": null
+  },
+  {
+    "id": 3,
+    "name": "خالد جبر الحويصي",
+    "phone": "0597726170",
+    "plate_letters": "ر م ح",
+    "plate_numbers": "9722",
+    "activation_code": "536839635",
+    "activated_at": "2025-09-03T15:12:47.534787",
+    "installation_center": null
+  },
+  {
+    "id": 4,
+    "name": "عبدالله صالح المسعود",
+    "phone": "0566602613",
+    "plate_letters": "DHJ",
+    "plate_numbers": "7365",
+    "activation_code": "734627894",
+    "activated_at": "2025-09-07T05:46:10.777342",
+    "installation_center": null
+  },
+  {
+    "id": 5,
+    "name": "صالح سعيد الترجمي",
+    "phone": "0555345784",
+    "plate_letters": "د د ا",
+    "plate_numbers": "6618",
+    "activation_code": "624693578",
+    "activated_at": "2025-09-07T15:39:47.060665",
+    "installation_center": null
+  },
+  {
+    "id": 6,
+    "name": "Ali Alharthi",
+    "phone": "0506576599",
+    "plate_letters": "ر و ن",
+    "plate_numbers": "3318",
+    "activation_code": "634692358",
+    "activated_at": "2025-09-07T20:31:21.056910",
+    "installation_center": null
+  },
+  {
+    "id": 11,
+    "name": "هدى الحربي",
+    "phone": "054284165841",
+    "plate_letters": "ر ه ب",
+    "plate_numbers": "6892",
+    "activation_code": "257363684",
+    "activated_at": "2025-09-12T20:03:35.812934",
+    "installation_center": "فرع العزيزية"
+  },
+  {
+    "id": 12,
+    "name": "احمد تركي الرحيلي",
+    "phone": "0506865059",
+    "plate_letters": "دأد",
+    "plate_numbers": "9664",
+    "activation_code": "257368263",
+    "activated_at": "2025-09-20T16:12:26.864034",
+    "installation_center": "سيارتك الفاخره لزينة السيارات"
+  },
+  {
+    "id": 13,
+    "name": "محمد سامى عبد رب النبى رضوان",
+    "phone": "0536039000",
+    "plate_letters": "س ح ب",
+    "plate_numbers": "7540",
+    "activation_code": "463673683",
+    "activated_at": "2025-09-24T18:49:31.423092",
+    "installation_center": "رالى"
+  },
+  {
+    "id": 14,
+    "name": "ماجد محمد الحربي",
+    "phone": "502773129",
+    "plate_letters": "س ا ر",
+    "plate_numbers": "2401",
+    "activation_code": "636736720",
+    "activated_at": "2025-09-28T22:53:29.439724",
+    "installation_center": "سيارتك الفاخر"
+  },
+  {
+    "id": 15,
+    "name": "بندر حمدان الحسيني",
+    "phone": "0502887283",
+    "plate_letters": "ب و ي",
+    "plate_numbers": "5804",
+    "activation_code": "636736836",
+    "activated_at": "2025-10-05T14:28:13.161078",
+    "installation_center": "شوران"
+  },
+  {
+    "id": 16,
+    "name": "خالد عناية الله العلوي",
+    "phone": "0567491939",
+    "plate_letters": "SLD",
+    "plate_numbers": "3310",
+    "activation_code": "634568344",
+    "activated_at": "2025-10-05T17:56:48.584109",
+    "installation_center": "سيارتك الفاخرة لزينة السيارات"
+  },
+  {
+    "id": 17,
+    "name": "علي عبدالرحمن العلياني",
+    "phone": "0555669694",
+    "plate_letters": "س ب ح",
+    "plate_numbers": "8927",
+    "activation_code": "625636728",
+    "activated_at": "2025-10-21T18:59:07.197540",
+    "installation_center": "سيارتك الفاخرة"
+  },
+  {
+    "id": 18,
+    "name": "خالد العتيبي",
+    "phone": "0535591293",
+    "plate_letters": "ح ر ط",
+    "plate_numbers": "8142",
+    "activation_code": "5369736736",
+    "activated_at": "2025-11-04T16:45:09.212337",
+    "installation_center": "مركز رالي"
+  }
+]

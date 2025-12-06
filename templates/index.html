@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ترو شيلد - تفعيل الضمان</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #cd6d55;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bubbles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: floatBubble 6s ease-in-out infinite;
+        }
+        
+        @keyframes floatBubble {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+        
+        @keyframes riseBubble {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-120vh) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 20%;
+            height: 20%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        .container {
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            padding-top: 30px;
+            position: relative;
+            z-index: 10;
+            opacity: 0;
+            animation: fadeInDown 0.8s ease forwards;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 100px;
+            margin-bottom: 10px;
+            opacity: 1;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+            animation: logoFloat 3s ease-in-out infinite;
+            transform: translateY(0);
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% {
+                transform: translateY(0px);
+                filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+            }
+            50% {
+                transform: translateY(-12px);
+                filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+            }
+        }
+
+        .title {
+            color: #f5f1e8;
+            margin-bottom: 20px;
+            font-size: 22px;
+            opacity: 0;
+            animation: titleSlide 1s ease forwards;
+            animation-delay: 0.5s;
+        }
+        
+        @keyframes titleSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            padding: 12px;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            font-size: 16px;
+            direction: rtl;
+            background-color: #f5f1e8;
+            color: #1e1e24;
+            transition: all 0.4s ease;
+            transform: translateY(0);
+            opacity: 0;
+            animation: slideInUp 0.6s ease forwards;
+        }
+        
+        input[type="text"]:nth-child(1) { animation-delay: 0.1s; }
+        input[type="text"]:nth-child(2) { animation-delay: 0.2s; }
+        .plate-input { animation-delay: 0.3s; opacity: 0; animation: slideInUp 0.6s ease forwards; }
+        input[name="installation_center"] { animation-delay: 0.4s; }
+        input[name="code"] { animation-delay: 0.5s; }
+        .submit-btn { animation-delay: 0.6s; opacity: 0; animation: slideInUp 0.6s ease forwards; }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        input[type="text"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: #b38e2e;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+            transform: translateY(-2px) scale(1.02);
+            background-color: #ffffff;
+        }
+
+        .plate-input {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        .plate-input input[type="text"] {
+            width: 48%;
+            text-align: center;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #d4af37, #f4d03f, #d4af37);
+            color: #1c1f2a;
+            padding: 16px 24px;
+            border: 3px solid #000000;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+                        0 0 0 2px rgba(212, 175, 55, 0.3),
+                        inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4),
+                        0 0 0 3px rgba(212, 175, 55, 0.5),
+                        inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #f4d03f, #d4af37, #f4d03f);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(-2px) scale(1.02);
+            transition: all 0.1s ease;
+        }
+
+        .submit-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.4),
+                        transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #f4d03f, #d4af37, #f4d03f);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4),
+                        0 0 0 3px rgba(212, 175, 55, 0.5),
+                        inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            border-color: #1a1a1a;
+        }
+
+        .submit-btn:hover:before {
+            left: 100%;
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3),
+                        0 0 0 2px rgba(212, 175, 55, 0.4),
+                        inset 0 2px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .alert {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .alert.success {
+            background-color: #2e7d32;
+            color: #ffffff;
+        }
+
+        .alert.error {
+            background-color: #c62828;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="bubbles"></div>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="True Shield Logo">
+        <h1 class="title">صفحة تنشيط الضمان</h1>
+
+        {% if success %}
+        <div class="alert success">
+            ✅ تم تفعيل الضمان<br>شكرًا لثقتك في ترو شيلد
+            <audio autoplay>
+                <source src="{{ url_for('static', filename='sounds/success.mp3') }}" type="audio/mpeg">
+            </audio>
+        </div>
+        {% elif error %}
+        <div class="alert error">
+            ❌ الكود المدخل خطأ أو مستخدم من قبل
+            <audio autoplay>
+                <source src="{{ url_for('static', filename='sounds/error.mp3') }}" type="audio/mpeg">
+            </audio>
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            <input type="text" name="name" placeholder="اكتب اسمك الكامل" required>
+            <input type="text" name="phone" placeholder="أدخل رقم جوالك" inputmode="numeric" required>
+
+            <div class="plate-input">
+                <input type="text" name="plate_letters" placeholder="حروف اللوحة" required>
+                <input type="text" name="plate_numbers" placeholder="أرقام اللوحة" inputmode="numeric" required>
+            </div>
+
+            <input type="text" name="installation_center" placeholder="المركز الذي تم شراء منه" required>
+
+            <input type="text" name="code" placeholder="أدخل كود التفعيل" inputmode="numeric" required>
+
+            <button type="submit" class="submit-btn">تفعيل الضمان</button>
+        </form>
+    </div>
+
+    <script>
+        // إنشاء فقاعات متحركة جميلة
+    function createAnimatedBubbles() {
+        const bubblesContainer = document.querySelector('.bubbles');
+        const bubbleCount = 12;
+
+        for (let i = 0; i < bubbleCount; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            // حجم عشوائي للفقاعات
+            const size = Math.random() * 40 + 20;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            
+            // موقع عشوائي
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.top = Math.random() * 100 + '%';
+            
+            // ألوان متنوعة للفقاعات
+            const colors = [
+                'rgba(255, 255, 255, 0.1)',
+                'rgba(212, 175, 55, 0.12)',
+                'rgba(245, 241, 232, 0.1)',
+                'rgba(255, 223, 186, 0.08)',
+                'rgba(244, 208, 63, 0.1)'
+            ];
+            bubble.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            // تأخير عشوائي للحركة
+            bubble.style.animationDelay = Math.random() * 6 + 's';
+            bubble.style.animationDuration = (Math.random() * 4 + 4) + 's';
+            
+            bubblesContainer.appendChild(bubble);
+        }
+    }
+    
+    // إضافة فقاعات أكثر تفاعلية
+    function createFloatingBubbles() {
+        const bubblesContainer = document.querySelector('.bubbles');
+        
+        setInterval(() => {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.width = Math.random() * 30 + 15 + 'px';
+            bubble.style.height = bubble.style.width;
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.top = '110%';
+            bubble.style.background = 'rgba(255, 255, 255, 0.08)';
+            bubble.style.animation = 'riseBubble 8s linear infinite';
+            
+            bubblesContainer.appendChild(bubble);
+            
+            // إزالة الفقاعة بعد انتهاء الحركة
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.parentNode.removeChild(bubble);
+                }
+            }, 8000);
+        }, 2000);
+    }
+
+    // تحويل الأرقام العربية إلى إنجليزية
+    function convertArabicToEnglish(str) {
+        if (!str) return str;
+        const arabicNumbers = '٠١٢٣٤٥٦٧٨٩';
+        const englishNumbers = '0123456789';
+        
+        return str.replace(/[٠-٩]/g, function(match) {
+            return englishNumbers[arabicNumbers.indexOf(match)];
+        });
+    }
+
+    // إضافة مستمع للأحداث لتحويل الأرقام قبل الإرسال
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const phoneInput = document.querySelector('input[name="phone"]');
+        const plateNumbersInput = document.querySelector('input[name="plate_numbers"]');
+        const codeInput = document.querySelector('input[name="code"]');
+
+        form.addEventListener('submit', function(e) {
+            // تحويل الأرقام العربية إلى إنجليزية قبل الإرسال فقط
+            if (phoneInput) phoneInput.value = convertArabicToEnglish(phoneInput.value);
+            if (plateNumbersInput) plateNumbersInput.value = convertArabicToEnglish(plateNumbersInput.value);
+            if (codeInput) codeInput.value = convertArabicToEnglish(codeInput.value);
+        });
+    });
+
+    // إنشاء الفقاعات المتحركة عند تحميل الصفحة
+    createAnimatedBubbles();
+    
+    // بدء فقاعات التصاعد
+    setTimeout(createFloatingBubbles, 2000);
+    
+    // اللوغو يعمل الآن بشكل تلقائي مع CSS فقط
+    </script>
+</body>
+</html>

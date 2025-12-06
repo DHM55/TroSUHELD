@@ -1,0 +1,140 @@
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #d38301; /* لون خلفية فخم */
+  color: #333333;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* لتوسيط العمودي */
+  height: 100vh; /* تم استبدال min-height لتفادي الفراغ */
+  overflow: hidden; /* لمنع التمرير */
+
+  /* أنميشن الخلفية */
+  background: linear-gradient(-45deg, #ff6a00, #999999, #ffab01, #ffffff);
+  background-size: 400% 400%;
+  animation: backgroundMove 15s ease infinite;
+}
+
+/* حركة الخلفية */
+@keyframes backgroundMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.container {
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  padding: 10px;
+}
+
+.logo {
+  width: 100px;
+  margin-bottom: 10px;
+
+  /* حركة اللوقو */
+  animation: floatLogo 3s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.title {
+  color: #ffffff;
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"] {
+  padding: 12px;
+  border: 2px solid #555555; /* رمادي غامق */
+  border-radius: 8px;
+  font-size: 16px;
+  direction: rtl;
+  background-color: #f5f1e8;
+  color: #1e1e24;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #888;
+  outline: none;
+}
+
+.plate-input {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.plate-input input[type="text"] {
+  width: 45%;
+  text-align: center;
+}
+
+.separator {
+  color: white;
+  align-self: center;
+}
+
+.submit-btn {
+  background-color: #d6b239;
+  color: black;
+  padding: 14px;
+  border: none;
+  border-radius: 25px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+/* أنميشن عند المرور على الزر */
+.submit-btn:hover {
+  background-color: #b2962d;
+  transform: scale(1.05);
+}
+
+.alert {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.alert.success {
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.alert.error {
+  background-color: #c62828;
+  color: #ffffff;
+}
+
+@media screen and (max-width: 480px) {
+  .title {
+      font-size: 20px;
+  }
+
+  .submit-btn {
+      font-size: 16px;
+      padding: 12px;
+  }
+
+  .logo {
+      width: 80px;
+  }
+}

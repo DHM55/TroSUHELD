@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة التفعيل - ترو شيلد</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #ff6a00, #999999, #ffab01, #ffffff);
+            background-size: 400% 400%;
+            animation: backgroundMove 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes backgroundMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 60px 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .message-box {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 44px;
+            min-width: 120px;
+            outline: none;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #d6b239, #b2962d);
+            color: #1e1e24;
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+        }
+
+        .btn:hover, .btn:focus {
+            /* بدون أنيميشن كما طلب المستخدم */
+        }
+
+        .btn:active {
+            /* بدون أنيميشن كما طلب المستخدم */
+        }
+
+        /* تحسينات خاصة للأجهزة اللمسية */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                padding: 18px 35px;
+                font-size: 18px;
+                min-height: 50px;
+            }
+            
+            .btn:active {
+                background-color: rgba(255, 255, 255, 0.2);
+                /* بدون تحويل كما طلب المستخدم */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+                margin: 20px;
+            }
+            
+            .logo {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .icon {
+                font-size: 60px;
+            }
+            
+            .message-box {
+                font-size: 20px;
+                padding: 20px;
+            }
+            
+            .buttons-container {
+                flex-direction: column;
+                gap: 20px;
+                margin-top: 30px;
+            }
+            
+            .btn {
+                padding: 18px 25px;
+                font-size: 16px;
+                width: 100%;
+                justify-content: center;
+                min-height: 50px;
+                border-radius: 15px;
+                font-weight: 600;
+            }
+            
+            .btn-back {
+                order: 2;
+            }
+            
+            .btn-whatsapp {
+                order: 1;
+            }
+        }
+
+        /* فقاعات متحركة في الخلفية */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .bubble:nth-child(1) { left: 10%; width: 60px; height: 60px; animation-delay: 0s; top: 20%; }
+        .bubble:nth-child(2) { left: 20%; width: 20px; height: 20px; animation-delay: 2s; top: 60%; }
+        .bubble:nth-child(3) { left: 35%; width: 40px; height: 40px; animation-delay: 4s; top: 40%; }
+        .bubble:nth-child(4) { left: 50%; width: 80px; height: 80px; animation-delay: 1s; top: 80%; }
+        .bubble:nth-child(5) { left: 65%; width: 25px; height: 25px; animation-delay: 3s; top: 30%; }
+        .bubble:nth-child(6) { left: 80%; width: 50px; height: 50px; animation-delay: 5s; top: 70%; }
+    </style>
+</head>
+<body>
+    <!-- فقاعات الخلفية -->
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+
+    <div class="container" data-aos="fade-up">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="True Shield Logo" class="logo" data-aos="zoom-in" data-aos-delay="200">
+
+        {% if success %}
+            <div class="icon" style="color: #00ff88;">✅</div>
+            <div class="message-box" data-aos="fade-up" data-aos-delay="300">
+                تم تفعيل الضمان بنجاح<br>شكراً لثقتك في <strong>ترو شيلد</strong>
+            </div>
+            <div class="buttons-container">
+                <a href="/" class="btn btn-back">↩️ الرجوع للصفحة الرئيسية</a>
+                <a href="https://wa.me/966547600240?text={{ ('✅ تم تفعيل الضمان بنجاح:\n\n👤 الاسم: ' ~ name ~ '\n🏢 الفرع: ' ~ installation_center ~ '\n📅 تاريخ التفعيل: ' ~ activation_date ~ '\n\nشكراً لثقتكم في ترو شيلد') | urlencode }}" 
+                   target="_blank" class="btn btn-whatsapp">💬 التواصل مع خدمة العملاء</a>
+            </div>
+        {% else %}
+            <div class="icon" style="color: #ff4d4d;">❌</div>
+            <div class="message-box" data-aos="fade-up" data-aos-delay="300">
+                الكود المدخل غير صحيح أو مستخدم مسبقاً<br>يرجى التحقق من البيانات أو التواصل معنا
+            </div>
+            <div class="buttons-container">
+                <a href="/" class="btn btn-back">↩️ الرجوع لتصحيح البيانات</a>
+                <a href="https://wa.me/966547600240?text={{ ('❌ يرجى المساعدة في تفعيل الكود:\n\n👤 الاسم: ' ~ name ~ '\n📱 رقم الجوال: ' ~ phone ~ '\n🚗 رقم اللوحة: ' ~ plate_letters ~ ' ' ~ plate_numbers ~ '\n🔢 كود التفعيل: ' ~ code ~ '\n\nيرجى المساعدة في حل هذه المشكلة') | urlencode }}" 
+                   target="_blank" class="btn btn-whatsapp">💬 التواصل مع الدعم الفني</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true
+        });
+        
+        // تحسين الأزرار للأجهزة اللمسية
+        document.addEventListener('DOMContentLoaded', function() {
+            // إضافة تأثيرات لمسية للأزرار
+            const buttons = document.querySelectorAll('.btn');
+            
+            buttons.forEach(button => {
+                // تحسين التفاعل اللمسي
+                // إزالة التأثيرات الحركية للأزرار كما طلب المستخدم
+                
+                // منع النقر المتعدد على الأزرار
+                let clickTimeout;
+                button.addEventListener('click', function(e) {
+                    // منع النقرات المكررة خلال فترة قصيرة
+                    if (clickTimeout) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    clickTimeout = setTimeout(() => {
+                        clickTimeout = null;
+                    }, 1000);
+                });
+            });
+        });
+        
+        // تشغيل صوت النجاح أو الخطأ
+        window.addEventListener('load', function() {
+            {% if success %}
+                // صوت النجاح
+                try {
+                    const successSound = new Audio("{{ url_for('static', filename='sounds/success.mp3') }}");
+                    successSound.volume = 0.5;
+                    successSound.play().catch(function(error) {
+                        console.log('لا يمكن تشغيل الصوت:', error);
+                    });
+                } catch(e) {
+                    console.log('خطأ في تشغيل الصوت:', e);
+                }
+            {% else %}
+                // صوت الخطأ
+                try {
+                    const errorSound = new Audio("{{ url_for('static', filename='sounds/error.mp3') }}");
+                    errorSound.volume = 0.5;
+                    errorSound.play().catch(function(error) {
+                        console.log('لا يمكن تشغيل الصوت:', error);
+                    });
+                } catch(e) {
+                    console.log('خطأ في تشغيل الصوت:', e);
+                }
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "backup_date": "2025-12-03T19:43:26.042113",
+  "total_codes": 29,
+  "total_customers": 14,
+  "database_info": {
+    "host": "ep-solitary-wildflower-adalptc0.c-2.us-east-1.aws.neon.tech",
+    "database": "neondb",
+    "user": "neondb_owner"
+  }
+}
