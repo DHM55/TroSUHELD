@@ -22,7 +22,7 @@ ADMIN_PASSWORD = 'Aa3650667788'
 def get_db_connection():
     """الاتصال بقاعدة البيانات"""
 
-    # أولاً نحاول باستخدام DATABASE_URL (Render / غيره)
+    # نحاول أولاً باستخدام DATABASE_URL (من Render)
     db_url = os.getenv("DATABASE_URL")
 
     try:
@@ -31,7 +31,7 @@ def get_db_connection():
             conn = psycopg2.connect(db_url)
             return conn
         else:
-            # في حال ما فيه DATABASE_URL نرجع للمتغيرات القديمة
+            # رجوع لمتغيرات PG* إذا ما كان فيه DATABASE_URL
             conn = psycopg2.connect(
                 database=os.getenv('PGDATABASE'),
                 user=os.getenv('PGUSER'),
@@ -59,17 +59,20 @@ def init_database():
         cur = conn.cursor()
 
         # إنشاء جدول الأكواد
-        cur.execute('''
+        cur.execute(
+            '''
             CREATE TABLE IF NOT EXISTS codes (
                 id SERIAL PRIMARY KEY,
                 code VARCHAR(50) UNIQUE NOT NULL,
                 is_used BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+            '''
+        )
 
         # إنشاء جدول العملاء
-        cur.execute('''
+        cur.execute(
+            '''
             CREATE TABLE IF NOT EXISTS customers (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -80,10 +83,12 @@ def init_database():
                 activation_code VARCHAR(50) NOT NULL,
                 activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ''')
+            '''
+        )
 
         # التأكد من وجود عمود installation_center في الجداول القديمة
-        cur.execute('''
+        cur.execute(
+            '''
             DO $$ 
             BEGIN 
                 IF NOT EXISTS (
@@ -93,7 +98,8 @@ def init_database():
                     ALTER TABLE customers ADD COLUMN installation_center VARCHAR(255);
                 END IF;
             END $$;
-        ''')
+            '''
+        )
 
         conn.commit()
         cur.close()
@@ -108,7 +114,7 @@ def init_database():
 
 
 def add_initial_codes():
-    """إضافة الأكواد الأولية إذا لم تكن موجودة"""
+    """إضافة أكواد أولية إذا كان الجدول فاضي (مرة واحدة فقط)"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -122,7 +128,6 @@ def add_initial_codes():
         count = result[0] if result else 0
 
         if count == 0:
-            # الأكواد الأولية
             initial_codes = [
                 '11111', '22222', '33333', '44444', '55555',
                 '66666', '77777', '88888', '99999', '12345'
@@ -180,10 +185,16 @@ def save_customer(name, phone, plate_letters, plate_numbers, installation_center
 
         cur = conn.cursor()
 
-        cur.execute('''
-            INSERT INTO customers (name, phone, plate_letters, plate_numbers, installation_center, activation_code)
+        cur.execute(
+            '''
+            INSERT INTO customers (
+                name, phone, plate_letters, plate_numbers,
+                installation_center, activation_code
+            )
             VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (name, phone, plate_letters, plate_numbers, installation_center, code))
+            ''',
+            (name, phone, plate_letters, plate_numbers, installation_center, code)
+        )
 
         conn.commit()
         cur.close()
@@ -198,7 +209,7 @@ def save_customer(name, phone, plate_letters, plate_numbers, installation_center
 
 
 def mark_code_used(code):
-    """تمييز الكود كمستخدم في قاعدة البيانات"""
+    """تمييز الكود كمستخدم"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -220,19 +231,21 @@ def mark_code_used(code):
 
 
 def get_customers():
-    """الحصول على جميع العملاء"""
+    """جلب جميع العملاء"""
     try:
         conn = get_db_connection()
         if not conn:
             return []
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("""
+        cur.execute(
+            """
             SELECT id, name, phone, plate_letters, plate_numbers,
                    installation_center, activation_code, activated_at
             FROM customers
             ORDER BY activated_at DESC
-        """)
+            """
+        )
         customers = cur.fetchall()
 
         cur.close()
@@ -245,7 +258,7 @@ def get_customers():
 
 
 def get_stats():
-    """إحصائيات النظام"""
+    """إحصائيات بسيطة للنظام"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -380,7 +393,6 @@ def admin_dashboard():
 
 @app.route('/admin/add_codes', methods=['POST'])
 def add_codes():
-    """إضافة أكواد جديدة من لوحة التحكم (مع تجاهل المكرر بدون تخريب الإضافة)"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
@@ -411,30 +423,21 @@ def add_codes():
         duplicate_count = 0
 
         for code in codes:
-            # نحاول الإضافة، ولو كان مكرر يتجاهله بدون خطأ
-            cur.execute(
-                "INSERT INTO codes (code, is_used) VALUES (%s, FALSE) "
-                "ON CONFLICT (code) DO NOTHING",
-                (code,)
-            )
-
-            if cur.rowcount == 1:
-                # فعلاً انضاف سطر جديد
+            try:
+                cur.execute("INSERT INTO codes (code) VALUES (%s)", (code,))
                 added_count += 1
-            else:
-                # الكود كان مكرر
+            except IntegrityError:
                 duplicate_count += 1
+                conn.rollback()
+                continue
 
         conn.commit()
         cur.close()
         conn.close()
 
-        if added_count == 0 and duplicate_count > 0:
-            message = 'كل الأكواد المدخلة كانت مكررة، لم يتم إضافة أي كود جديد'
-        else:
-            message = f"تم إضافة {added_count} كود جديد"
-            if duplicate_count > 0:
-                message += f" ({duplicate_count} كود مكرر تم تجاهله)"
+        message = f"تم إضافة {added_count} كود جديد"
+        if duplicate_count > 0:
+            message += f" ({duplicate_count} كود مكرر تم تجاهله)"
 
         flash(message, 'success')
 
@@ -504,7 +507,7 @@ def run_initial_setup():
         print("❌ فشل في تهيئة قاعدة البيانات")
 
 
-# تشغيل التهيئة مرة واحدة عند استيراد الملف (مع gunicorn / Render)
+# تشغيل التهيئة مرة واحدة عند استيراد الملف
 run_initial_setup()
 
 
