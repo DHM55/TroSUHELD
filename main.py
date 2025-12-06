@@ -242,56 +242,49 @@ def warranty_activation():
         installation_center = request.form.get('installation_center', '').strip()
         code = request.form.get('code', '').strip()
         
-        # التحقق من الحقول
         if not all([name, phone, plate_letters, plate_numbers, installation_center, code]):
-            return render_template('result.html', 
-                                 success=False, 
-                                 message="يرجى ملء جميع الحقول المطلوبة",
-                                 name=name,
-                                 phone=phone,
-                                 plate_letters=plate_letters,
-                                 plate_numbers=plate_numbers,
-                                 installation_center=installation_center,
-                                 code=code)
+            return render_template('result.html',
+                                   success=False,
+                                   message="يرجى ملء جميع الحقول المطلوبة",
+                                   name=name,
+                                   phone=phone,
+                                   plate_letters=plate_letters,
+                                   plate_numbers=plate_numbers,
+                                   installation_center=installation_center,
+                                   code=code)
         
-        # التحقق من صحة الكود
         valid_codes = get_valid_codes()
         if code in valid_codes:
-            # حفظ بيانات العميل
             if save_customer(name, phone, plate_letters, plate_numbers, installation_center, code):
-                # تمييز الكود كمستخدم
                 mark_code_used(code)
-                
-                # تاريخ التفعيل الحالي
-                from datetime import datetime
                 activation_date = datetime.now().strftime('%Y-%m-%d %H:%M')
                 
-                return render_template('result.html', 
-                                     success=True, 
-                                     message="تم تفعيل الضمان بنجاح!",
-                                     name=name,
-                                     installation_center=installation_center,
-                                     activation_date=activation_date)
+                return render_template('result.html',
+                                       success=True,
+                                       message="تم تفعيل الضمان بنجاح!",
+                                       name=name,
+                                       installation_center=installation_center,
+                                       activation_date=activation_date)
             else:
-                return render_template('result.html', 
-                                     success=False, 
-                                     message="حدث خطأ في حفظ البيانات",
-                                     name=name,
-                                     phone=phone,
-                                     plate_letters=plate_letters,
-                                     plate_numbers=plate_numbers,
-                                     installation_center=installation_center,
-                                     code=code)
+                return render_template('result.html',
+                                       success=False,
+                                       message="حدث خطأ في حفظ البيانات",
+                                       name=name,
+                                       phone=phone,
+                                       plate_letters=plate_letters,
+                                       plate_numbers=plate_numbers,
+                                       installation_center=installation_center,
+                                       code=code)
         else:
-            return render_template('result.html', 
-                                 success=False, 
-                                 message="كود التفعيل غير صحيح",
-                                 name=name,
-                                 phone=phone,
-                                 plate_letters=plate_letters,
-                                 plate_numbers=plate_numbers,
-                                 installation_center=installation_center,
-                                 code=code)
+            return render_template('result.html',
+                                   success=False,
+                                   message="كود التفعيل غير صحيح",
+                                   name=name,
+                                   phone=phone,
+                                   plate_letters=plate_letters,
+                                   plate_numbers=plate_numbers,
+                                   installation_center=installation_center,
+                                   code=code)
     
     return render_template('index.html')
 
@@ -316,15 +309,14 @@ def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
-    # الحصول على بيانات العملاء والإحصائيات
     customers = get_customers()
     valid_codes = get_valid_codes()
     stats = get_stats()
     
-    return render_template('admin_dashboard.html', 
-                         customers=customers, 
-                         codes=valid_codes,
-                         stats=stats)
+    return render_template('admin_dashboard.html',
+                           customers=customers,
+                           codes=valid_codes,
+                           stats=stats)
 
 @app.route('/admin/add_codes', methods=['POST'])
 def add_codes():
@@ -336,7 +328,6 @@ def add_codes():
         flash('يرجى إدخال أكواد صحيحة', 'error')
         return redirect(url_for('admin_dashboard'))
     
-    # تقسيم الأكواد (فاصلة أو سطر جديد)
     codes = []
     for line in codes_text.replace(',', '\n').split('\n'):
         code = line.strip()
@@ -347,7 +338,6 @@ def add_codes():
         flash('لم يتم العثور على أكواد صحيحة', 'error')
         return redirect(url_for('admin_dashboard'))
     
-    # إضافة الأكواد إلى قاعدة البيانات
     try:
         conn = get_db_connection()
         if not conn:
@@ -363,7 +353,6 @@ def add_codes():
                 cur.execute("INSERT INTO codes (code) VALUES (%s)", (code,))
                 added_count += 1
             except IntegrityError:
-                # كود مكرر
                 duplicate_count += 1
                 conn.rollback()
                 continue
@@ -386,7 +375,6 @@ def add_codes():
 
 @app.route('/admin/delete_code/<code>', methods=['POST'])
 def delete_code(code):
-    """حذف كود من قاعدة البيانات"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
@@ -421,21 +409,21 @@ def admin_logout():
 
 @app.route('/api', methods=['GET', 'HEAD'])
 def api_status():
-    """API status endpoint to prevent 404 errors from monitoring systems"""
     return {"status": "ok", "service": "True Shield Warranty System"}
 
 if __name__ == '__main__':
     print("🚀 بدء تشغيل True Shield مع قاعدة البيانات...")
     
-    # تهيئة قاعدة البيانات
     if init_database():
         add_initial_codes()
         stats = get_stats()
-        print(f"📊 إحصائيات:")
+        print("📊 إحصائيات:")
         print(f"   • الأكواد المتاحة: {stats['codes']}")
         print(f"   • العملاء المسجلين: {stats['customers']}")
         print("✅ True Shield جاهز للعمل مع قاعدة البيانات!")
     else:
         print("❌ فشل في تهيئة قاعدة البيانات")
     
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # المنصّة (مثل Render) تعطي PORT في env
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
