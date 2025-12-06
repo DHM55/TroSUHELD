@@ -479,8 +479,27 @@ def api_status():
 
 
 # =========================
+#  مسار استرجاع الباك أب (تشغيل واحد فقط)
+# =========================
+@app.route('/admin/restore_backup')
+def admin_restore_backup():
+    """استرجاع العملاء والأكواد من ملفات النسخة الاحتياطية"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    try:
+        from restore_backup import restore_from_backup
+        restore_from_backup()
+        flash('✅ تم استرجاع النسخة الاحتياطية (العملاء + الأكواد) بنجاح', 'success')
+    except Exception as e:
+        print(f"❌ خطأ في استرجاع النسخة الاحتياطية: {e}")
+        flash('❌ حدث خطأ في استرجاع النسخة الاحتياطية، راجع السجلات (Logs)', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+# =========================
 #  تهيئة القاعدة عند استيراد الملف
-#  (يعمل مع gunicorn و التشغيل المحلي)
 # =========================
 def run_initial_setup():
     print("🔧 بدء تهيئة قاعدة البيانات...")
